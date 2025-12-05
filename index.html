@@ -3,838 +3,348 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Random Name Picker</title>
+    <title>Multi-User Random Name Picker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: #f5f7fa;
-            min-height: 100vh;
-            display: flex;
-        }
-
-        .sidebar {
-            width: 220px;
-            background: #ffffff;
-            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.05);
-            padding: 30px 20px;
-            position: fixed;
-            height: 100vh;
-            overflow-y: auto;
-            transition: transform 0.3s ease;
-        }
-
-        .sidebar h2 {
-            color: #2c3e50;
-            margin-bottom: 25px;
-            font-size: 1.3rem;
-            font-weight: 600;
-        }
-
-        .class-btn {
-            width: 100%;
-            padding: 14px 18px;
-            margin-bottom: 8px;
-            background: #f8f9fa;
-            border: none;
-            border-radius: 8px;
-            color: #495057;
-            font-size: 0.95rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            text-align: left;
-        }
-
-        .class-btn:hover {
-            background: #e9ecef;
-            color: #2c3e50;
-        }
-
-        .class-btn.active {
-            background: #2c3e50;
-            color: white;
-        }
-
-        .admin-toggle {
-            margin-top: 40px;
-            padding-top: 20px;
-            border-top: 1px solid #e9ecef;
-        }
-
-        .admin-btn {
-            width: 100%;
-            padding: 12px;
-            background: #6c757d;
-            border: none;
-            border-radius: 8px;
-            color: white;
-            font-size: 0.9rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .admin-btn:hover {
-            background: #5a6268;
-        }
-
-        .main-content {
-            flex: 1;
-            margin-left: 220px;
-            padding: 40px;
-            max-width: 1400px;
-        }
-
-        .header {
-            margin-bottom: 30px;
-        }
-
-        h1 {
-            color: #2c3e50;
-            font-size: 2rem;
-            font-weight: 600;
-            margin-bottom: 8px;
-        }
-
-        .subtitle {
-            color: #6c757d;
-            font-size: 1rem;
-        }
-
-        .picker-card {
-            background: white;
-            border-radius: 12px;
-            padding: 50px 40px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-            margin-bottom: 30px;
-            text-align: center;
-        }
-
-        #pickedName {
-            font-size: 2.8rem;
-            color: #2c3e50;
-            font-weight: 600;
-            min-height: 90px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 30px;
-        }
-
-        #pickedName.empty {
-            color: #adb5bd;
-            font-size: 1.3rem;
-            font-weight: 400;
-        }
-
-        .pick-btn {
-            background: #2c3e50;
-            color: white;
-            border: none;
-            padding: 16px 50px;
-            font-size: 1.1rem;
-            font-weight: 600;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .pick-btn:hover {
-            background: #1a252f;
-            transform: translateY(-1px);
-        }
-
-        .pick-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .stats-row {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-
-        .stat-card {
-            background: white;
-            padding: 25px;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-            text-align: center;
-        }
-
-        .stat-number {
-            font-size: 2.5rem;
-            font-weight: 700;
-            color: #2c3e50;
-            margin-bottom: 5px;
-        }
-
-        .stat-label {
-            color: #6c757d;
-            font-size: 0.95rem;
-            font-weight: 500;
-        }
-
-        .names-section {
-            background: white;
-            border-radius: 12px;
-            padding: 30px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-        }
-
-        .section-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 2px solid #f8f9fa;
-        }
-
-        .section-title {
-            font-size: 1.3rem;
-            font-weight: 600;
-            color: #2c3e50;
-        }
-
-        .names-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 12px;
-        }
-
-        .name-item {
-            background: #f8f9fa;
-            padding: 16px 18px;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            transition: all 0.2s ease;
-            border: 2px solid transparent;
-        }
-
-        .name-item:hover {
-            background: #e9ecef;
-        }
-
-        .name-item.disabled {
-            opacity: 0.4;
-        }
-
-        .name-item.picked {
-            background: #fff3cd;
-            border-color: #ffc107;
-        }
-
-        .name-text {
-            flex: 1;
-            font-weight: 500;
-            color: #2c3e50;
-            font-size: 1rem;
-        }
-
-        .name-controls {
-            display: flex;
-            gap: 12px;
-            align-items: center;
-        }
-
-        .toggle-checkbox {
-            width: 22px;
-            height: 22px;
-            cursor: pointer;
-            accent-color: #2c3e50;
-        }
-
-        .delete-btn {
-            background: #dc3545;
-            color: white;
-            border: none;
-            padding: 6px 14px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 0.85rem;
-            font-weight: 500;
-            transition: all 0.2s ease;
-            display: none;
-        }
-
-        .name-item:hover .delete-btn {
-            display: block;
-        }
-
-        .delete-btn:hover {
-            background: #c82333;
-        }
-
-        .menu-toggle {
-            display: none;
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            z-index: 1000;
-            background: white;
-            border: none;
-            padding: 12px 18px;
-            border-radius: 8px;
-            cursor: pointer;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            font-size: 1.2rem;
-        }
-
-        /* Modal Styles */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 1001;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .modal.active {
-            display: flex;
-        }
-
-        .modal-content {
-            background: white;
-            padding: 40px;
-            border-radius: 12px;
-            max-width: 500px;
-            width: 90%;
-            max-height: 80vh;
-            overflow-y: auto;
-        }
-
-        .modal-header {
-            font-size: 1.5rem;
-            font-weight: 600;
-            color: #2c3e50;
-            margin-bottom: 25px;
-        }
-
-        .input-group {
-            margin-bottom: 20px;
-        }
-
-        .input-label {
-            display: block;
-            margin-bottom: 8px;
-            color: #495057;
-            font-weight: 500;
-            font-size: 0.95rem;
-        }
-
-        input[type="text"], input[type="password"], textarea, select {
-            width: 100%;
-            padding: 12px 15px;
-            border: 2px solid #e9ecef;
-            border-radius: 8px;
-            font-size: 1rem;
-            transition: border-color 0.2s ease;
-        }
-
-        input[type="text"]:focus, input[type="password"]:focus, textarea:focus, select:focus {
-            outline: none;
-            border-color: #2c3e50;
-        }
-
-        textarea {
-            min-height: 120px;
-            resize: vertical;
-            font-family: inherit;
-        }
-
-        .btn {
-            padding: 12px 28px;
-            border: none;
-            border-radius: 8px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .btn-primary {
-            background: #2c3e50;
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background: #1a252f;
-        }
-
-        .btn-secondary {
-            background: #6c757d;
-            color: white;
-            margin-left: 10px;
-        }
-
-        .btn-secondary:hover {
-            background: #5a6268;
-        }
-
-        .modal-actions {
-            display: flex;
-            gap: 10px;
-            margin-top: 25px;
-        }
-
-        .success-message {
-            background: #d4edda;
-            color: #155724;
-            padding: 12px 15px;
-            border-radius: 8px;
-            margin-bottom: 15px;
-            display: none;
-        }
-
-        .success-message.show {
-            display: block;
-        }
-
-        @media (max-width: 768px) {
-            .sidebar {
-                transform: translateX(-100%);
-                z-index: 999;
-            }
-
-            .sidebar.open {
-                transform: translateX(0);
-            }
-
-            .main-content {
-                margin-left: 0;
-                padding: 80px 20px 20px;
-            }
-
-            .menu-toggle {
-                display: block;
-            }
-
-            h1 {
-                font-size: 1.6rem;
-            }
-
-            #pickedName {
-                font-size: 2rem;
-                min-height: 70px;
-            }
-
-            .names-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .picker-card {
-                padding: 35px 25px;
-            }
-
-            .modal-content {
-                padding: 30px 25px;
-            }
-
-            .stats-row {
-                grid-template-columns: 1fr;
-            }
-
-            .delete-btn {
-                display: block;
-            }
         }
     </style>
 </head>
-<body>
-    <button class="menu-toggle" onclick="toggleMenu()">☰</button>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
+    <div class="flex min-h-screen">
+        <div class="w-64 bg-white shadow-lg">
+            <div class="p-6 bg-indigo-600 text-white">
+                <svg class="w-8 h-8 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                </svg>
+                <h1 class="text-xl font-bold">Name Picker</h1>
+            </div>
+            <nav class="p-4">
+                <button onclick="switchGrade('freshman')" id="btn-freshman" class="w-full text-left px-4 py-3 mb-2 rounded-lg font-medium transition-all bg-indigo-100 text-indigo-700 shadow-sm">
+                    Freshman
+                </button>
+                <button onclick="switchGrade('sophomore')" id="btn-sophomore" class="w-full text-left px-4 py-3 mb-2 rounded-lg font-medium transition-all text-gray-700 hover:bg-gray-100">
+                    Sophomore
+                </button>
+                <button onclick="switchGrade('junior')" id="btn-junior" class="w-full text-left px-4 py-3 mb-2 rounded-lg font-medium transition-all text-gray-700 hover:bg-gray-100">
+                    Junior
+                </button>
+                <button onclick="switchGrade('senior')" id="btn-senior" class="w-full text-left px-4 py-3 mb-2 rounded-lg font-medium transition-all text-gray-700 hover:bg-gray-100">
+                    Senior
+                </button>
+            </nav>
+            <div class="p-4 border-t">
+                <button onclick="showAuthModal()" class="flex items-center gap-2 text-sm text-gray-600 hover:text-indigo-600">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                    </svg>
+                    <span id="auth-status">Admin Login</span>
+                </button>
+            </div>
+        </div>
 
-    <div class="sidebar" id="sidebar">
-        <h2>Classes</h2>
-        <button class="class-btn active" onclick="switchClass('freshman')">Freshman</button>
-        <button class="class-btn" onclick="switchClass('sophomore')">Sophomore</button>
-        <button class="class-btn" onclick="switchClass('junior')">Junior</button>
-        <button class="class-btn" onclick="switchClass('senior')">Senior</button>
-        
-        <div class="admin-toggle">
-            <button class="admin-btn" onclick="openAdminModal()">Admin Panel</button>
+        <div class="flex-1 p-8">
+            <div class="max-w-4xl mx-auto">
+                <div class="bg-white rounded-xl shadow-lg p-8 mb-6">
+                    <h2 id="grade-title" class="text-3xl font-bold text-gray-800 mb-2">Freshman Class</h2>
+                    <div class="flex gap-4 text-sm text-gray-600 mb-6">
+                        <span id="available-count">Available: 0</span>
+                        <span id="picked-count">Picked: 0</span>
+                        <span id="total-count">Total: 0</span>
+                    </div>
+
+                    <div class="flex gap-3 mb-6">
+                        <button onclick="pickRandom()" class="flex-1 bg-indigo-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-indigo-700 transition-all shadow-md">
+                            Pick Random Name
+                        </button>
+                        <button onclick="resetPicked()" class="px-4 py-3 bg-gray-200 rounded-lg hover:bg-gray-300 transition-all" title="Reset all picked names">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <div id="last-picked" class="hidden bg-green-50 border-2 border-green-300 rounded-lg p-6 mb-6 text-center">
+                        <p class="text-sm text-green-700 mb-1">Selected Name:</p>
+                        <p id="picked-name" class="text-3xl font-bold text-green-800"></p>
+                    </div>
+
+                    <div id="add-names-section" class="hidden border-t pt-6 mb-6">
+                        <h3 class="text-lg font-semibold mb-4">Add Names</h3>
+                        <div class="flex gap-2 mb-2">
+                            <input type="text" id="new-name-input" placeholder="Enter a name" class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <button onclick="addName()" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                                </svg>
+                            </button>
+                        </div>
+                        <button onclick="toggleBulkAdd()" class="text-sm text-indigo-600 hover:text-indigo-700">
+                            Add multiple names
+                        </button>
+                        <div id="bulk-add-section" class="hidden mt-3">
+                            <textarea id="bulk-names-input" placeholder="Enter names (one per line)" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 mb-2" rows="4"></textarea>
+                            <button onclick="addBulkNames()" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all">
+                                Add All Names
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <h3 class="text-xl font-semibold mb-4">Names</h3>
+                    <div id="names-list" class="space-y-2">
+                        <p class="text-gray-500 text-center py-8">No names added yet</p>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
-    <div class="main-content">
-        <div class="header">
-            <h1 id="classTitle">Freshman Name Picker</h1>
-            <p class="subtitle">Select a random name from the available pool</p>
-        </div>
-
-        <div class="picker-card">
-            <div id="pickedName" class="empty">Click "Pick Random Name" to start</div>
-            <button class="pick-btn" onclick="pickRandomName()">Pick Random Name</button>
-        </div>
-
-        <div class="stats-row">
-            <div class="stat-card">
-                <div class="stat-number" id="totalNames">0</div>
-                <div class="stat-label">Total Names</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number" id="availableNames">0</div>
-                <div class="stat-label">Available</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number" id="pickedNames">0</div>
-                <div class="stat-label">Already Picked</div>
-            </div>
-        </div>
-
-        <div class="names-section">
-            <div class="section-header">
-                <div class="section-title">Name List</div>
-            </div>
-            <div class="names-grid" id="namesList"></div>
-        </div>
-    </div>
-
-    <!-- Admin Modal -->
-    <div class="modal" id="adminModal">
-        <div class="modal-content">
-            <div class="modal-header">Admin Panel</div>
-            
-            <div class="success-message" id="successMessage"></div>
-            
-            <div class="input-group">
-                <label class="input-label">Password</label>
-                <input type="password" id="adminPassword" placeholder="Enter admin password">
-            </div>
-
-            <div class="input-group">
-                <label class="input-label">Select Class</label>
-                <select id="adminClassSelect">
-                    <option value="freshman">Freshman</option>
-                    <option value="sophomore">Sophomore</option>
-                    <option value="junior">Junior</option>
-                    <option value="senior">Senior</option>
-                </select>
-            </div>
-
-            <div class="input-group">
-                <label class="input-label">Add Single Name</label>
-                <input type="text" id="singleName" placeholder="Enter name">
-                <button class="btn btn-primary" onclick="addSingleName()" style="margin-top: 10px; width: 100%;">Add Name</button>
-            </div>
-
-            <div class="input-group">
-                <label class="input-label">Add Multiple Names</label>
-                <textarea id="multipleNames" placeholder="Enter multiple names (one per line)"></textarea>
-                <button class="btn btn-primary" onclick="addMultipleNames()" style="margin-top: 10px; width: 100%;">Add Multiple Names</button>
-            </div>
-
-            <div class="modal-actions">
-                <button class="btn btn-secondary" onclick="closeAdminModal()">Close</button>
+    <div id="auth-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg p-6 max-w-sm w-full">
+            <h3 class="text-xl font-semibold mb-4">Admin Authentication</h3>
+            <input type="password" id="password-input" placeholder="Enter password" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 mb-4">
+            <div class="flex gap-2">
+                <button onclick="authenticate()" class="flex-1 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700">
+                    Login
+                </button>
+                <button onclick="hideAuthModal()" class="flex-1 bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300">
+                    Cancel
+                </button>
             </div>
         </div>
     </div>
 
     <script>
-        const ADMIN_PASSWORD = 'Purple60pear';
-        let currentClass = 'freshman';
-        let allClassData = {
-            freshman: { names: [] },
-            sophomore: { names: [] },
-            junior: { names: [] },
-            senior: { names: [] }
-        };
+        var ADMIN_PASSWORD = 'Purple60pear';
+        var GRADES = ['freshman', 'sophomore', 'junior', 'senior'];
+        
+        var currentGrade = 'freshman';
+        var names = {};
+        var isAuthenticated = false;
 
-        async function loadAllData() {
-            const classes = ['freshman', 'sophomore', 'junior', 'senior'];
-            
-            for (const cls of classes) {
-                try {
-                    const result = await window.storage.get(`names-${cls}`, true);
-                    if (result && result.value) {
-                        allClassData[cls] = JSON.parse(result.value);
-                    } else {
-                        allClassData[cls] = { names: [] };
-                    }
-                } catch (error) {
-                    console.log(`No data for ${cls}, starting fresh`);
-                    allClassData[cls] = { names: [] };
-                }
+        loadData();
+
+        function loadData() {
+            for (var i = 0; i < GRADES.length; i++) {
+                var grade = GRADES[i];
+                var stored = localStorage.getItem('names-' + grade);
+                names[grade] = stored ? JSON.parse(stored) : [];
             }
-            
             renderNames();
+            updateCounts();
         }
 
-        async function saveDataForClass(className) {
-            try {
-                const dataToSave = JSON.stringify(allClassData[className]);
-                await window.storage.set(`names-${className}`, dataToSave, true);
-                return true;
-            } catch (error) {
-                console.error('Save error:', error);
-                alert('Failed to save data. Please try again.');
-                return false;
-            }
-        }
-
-        function showSuccessMessage(message) {
-            const successMsg = document.getElementById('successMessage');
-            successMsg.textContent = message;
-            successMsg.classList.add('show');
-            setTimeout(() => {
-                successMsg.classList.remove('show');
-            }, 3000);
-        }
-
-        function checkPassword() {
-            const password = document.getElementById('adminPassword').value;
-            if (password !== ADMIN_PASSWORD) {
-                alert('Incorrect password! Admin actions require the correct password.');
-                return false;
-            }
-            return true;
-        }
-
-        function openAdminModal() {
-            document.getElementById('adminModal').classList.add('active');
-            document.getElementById('adminClassSelect').value = currentClass;
-        }
-
-        function closeAdminModal() {
-            document.getElementById('adminModal').classList.remove('active');
-            document.getElementById('adminPassword').value = '';
-            document.getElementById('singleName').value = '';
-            document.getElementById('multipleNames').value = '';
-        }
-
-        async function addSingleName() {
-            if (!checkPassword()) return;
-            
-            const targetClass = document.getElementById('adminClassSelect').value;
-            const nameInput = document.getElementById('singleName');
-            const name = nameInput.value.trim();
-            
-            if (!name) {
-                alert('Please enter a name');
-                return;
-            }
-            
-            if (allClassData[targetClass].names.some(n => n.name.toLowerCase() === name.toLowerCase())) {
-                alert('This name already exists in this class!');
-                return;
-            }
-            
-            allClassData[targetClass].names.push({
-                name: name,
-                enabled: true,
-                picked: false,
-                id: Date.now() + Math.random()
-            });
-            
-            const saved = await saveDataForClass(targetClass);
-            if (saved) {
-                nameInput.value = '';
-                showSuccessMessage(`Added "${name}" to ${targetClass}`);
-                if (targetClass === currentClass) {
-                    renderNames();
-                }
-            }
-        }
-
-        async function addMultipleNames() {
-            if (!checkPassword()) return;
-            
-            const targetClass = document.getElementById('adminClassSelect').value;
-            const textarea = document.getElementById('multipleNames');
-            const names = textarea.value.split('\n').map(n => n.trim()).filter(n => n);
-            
-            if (names.length === 0) {
-                alert('Please enter at least one name');
-                return;
-            }
-            
-            let added = 0;
-            names.forEach(name => {
-                if (!allClassData[targetClass].names.some(n => n.name.toLowerCase() === name.toLowerCase())) {
-                    allClassData[targetClass].names.push({
-                        name: name,
-                        enabled: true,
-                        picked: false,
-                        id: Date.now() + Math.random()
-                    });
-                    added++;
-                }
-            });
-            
-            const saved = await saveDataForClass(targetClass);
-            if (saved) {
-                textarea.value = '';
-                showSuccessMessage(`Added ${added} name(s) to ${targetClass}`);
-                if (targetClass === currentClass) {
-                    renderNames();
-                }
-            }
-        }
-
-        async function deleteName(id) {
-            if (confirm('Are you sure you want to delete this name? You will need to enter the admin password.')) {
-                const password = prompt('Enter admin password to delete:');
-                if (password !== ADMIN_PASSWORD) {
-                    alert('Incorrect password! Name was not deleted.');
-                    return;
-                }
-                
-                allClassData[currentClass].names = allClassData[currentClass].names.filter(n => n.id !== id);
-                const saved = await saveDataForClass(currentClass);
-                if (saved) {
-                    renderNames();
-                    alert('Name deleted successfully!');
-                }
-            }
-        }
-
-        async function toggleName(id) {
-            const name = allClassData[currentClass].names.find(n => n.id === id);
-            if (name) {
-                name.enabled = !name.enabled;
-                await saveDataForClass(currentClass);
-                renderNames();
-            }
-        }
-
-        async function pickRandomName() {
-            const availableNames = allClassData[currentClass].names.filter(n => n.enabled && !n.picked);
-            
-            if (availableNames.length === 0) {
-                const pickedNameEl = document.getElementById('pickedName');
-                pickedNameEl.textContent = 'No available names to pick!';
-                pickedNameEl.classList.add('empty');
-                return;
-            }
-            
-            const randomIndex = Math.floor(Math.random() * availableNames.length);
-            const picked = availableNames[randomIndex];
-            
-            picked.picked = true;
-            
-            const pickedNameEl = document.getElementById('pickedName');
-            pickedNameEl.textContent = picked.name;
-            pickedNameEl.classList.remove('empty');
-            
-            await saveDataForClass(currentClass);
+        function saveData() {
+            localStorage.setItem('names-' + currentGrade, JSON.stringify(names[currentGrade]));
             renderNames();
+            updateCounts();
+        }
+
+        function switchGrade(grade) {
+            currentGrade = grade;
+            for (var i = 0; i < GRADES.length; i++) {
+                var g = GRADES[i];
+                var btn = document.getElementById('btn-' + g);
+                if (g === grade) {
+                    btn.className = 'w-full text-left px-4 py-3 mb-2 rounded-lg font-medium transition-all bg-indigo-100 text-indigo-700 shadow-sm';
+                } else {
+                    btn.className = 'w-full text-left px-4 py-3 mb-2 rounded-lg font-medium transition-all text-gray-700 hover:bg-gray-100';
+                }
+            }
+            document.getElementById('grade-title').textContent = grade.charAt(0).toUpperCase() + grade.slice(1) + ' Class';
+            renderNames();
+            updateCounts();
+        }
+
+        function updateCounts() {
+            var currentNames = names[currentGrade] || [];
+            var available = 0;
+            var picked = 0;
+            for (var i = 0; i < currentNames.length; i++) {
+                if (currentNames[i].available && !currentNames[i].picked) {
+                    available++;
+                }
+                if (currentNames[i].picked) {
+                    picked++;
+                }
+            }
+            document.getElementById('available-count').textContent = 'Available: ' + available;
+            document.getElementById('picked-count').textContent = 'Picked: ' + picked;
+            document.getElementById('total-count').textContent = 'Total: ' + currentNames.length;
         }
 
         function renderNames() {
-            const list = document.getElementById('namesList');
-            list.innerHTML = '';
+            var currentNames = names[currentGrade] || [];
+            var container = document.getElementById('names-list');
             
-            const currentData = allClassData[currentClass];
-            const sortedNames = [...currentData.names].sort((a, b) => 
-                a.name.localeCompare(b.name)
-            );
-            
-            if (sortedNames.length === 0) {
-                list.innerHTML = '<div style="text-align: center; color: #6c757d; padding: 40px; grid-column: 1/-1;">No names added yet. Use the Admin Panel to add names.</div>';
-                updateStats();
+            if (currentNames.length === 0) {
+                container.innerHTML = '<p class="text-gray-500 text-center py-8">No names added yet</p>';
                 return;
             }
-            
-            sortedNames.forEach(person => {
-                const div = document.createElement('div');
-                div.className = 'name-item';
-                if (!person.enabled) div.classList.add('disabled');
-                if (person.picked) div.classList.add('picked');
+
+            var html = '';
+            for (var i = 0; i < currentNames.length; i++) {
+                var item = currentNames[i];
+                var bgClass = item.picked ? 'bg-red-50 border-red-200' : item.available ? 'bg-white border-gray-200' : 'bg-gray-50 border-gray-200';
+                var textClass = item.picked ? 'line-through text-gray-500' : 'text-gray-800';
+                var pickedBadge = item.picked ? '<span class="text-xs bg-red-200 text-red-800 px-2 py-1 rounded">Picked</span>' : '';
+                var checkboxChecked = item.available ? 'checked' : '';
+                var deleteBtn = '';
+                if (isAuthenticated) {
+                    deleteBtn = '<button onclick="deleteName(' + i + ')" class="p-2 text-red-600 hover:bg-red-50 rounded transition-all"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>';
+                }
                 
-                const nameSpan = document.createElement('span');
-                nameSpan.className = 'name-text';
-                nameSpan.textContent = person.name + (person.picked ? ' (Picked)' : '');
-                
-                const controls = document.createElement('div');
-                controls.className = 'name-controls';
-                
-                const checkbox = document.createElement('input');
-                checkbox.type = 'checkbox';
-                checkbox.className = 'toggle-checkbox';
-                checkbox.checked = person.enabled;
-                checkbox.title = 'Toggle availability';
-                checkbox.onchange = () => toggleName(person.id);
-                
-                const deleteBtn = document.createElement('button');
-                deleteBtn.className = 'delete-btn';
-                deleteBtn.textContent = 'Delete';
-                deleteBtn.onclick = () => deleteName(person.id);
-                
-                controls.appendChild(checkbox);
-                controls.appendChild(deleteBtn);
-                div.appendChild(nameSpan);
-                div.appendChild(controls);
-                list.appendChild(div);
-            });
-            
-            updateStats();
+                html += '<div class="flex items-center justify-between p-3 rounded-lg border ' + bgClass + '">';
+                html += '<div class="flex items-center gap-3 flex-1">';
+                html += '<input type="checkbox" ' + checkboxChecked + ' onchange="toggleAvailability(' + i + ')" class="w-5 h-5 text-indigo-600 rounded">';
+                html += '<span class="' + textClass + '">' + item.name + '</span>';
+                html += pickedBadge;
+                html += '</div>';
+                html += deleteBtn;
+                html += '</div>';
+            }
+            container.innerHTML = html;
         }
 
-        function updateStats() {
-            const currentData = allClassData[currentClass];
-            const total = currentData.names.length;
-            const available = currentData.names.filter(n => n.enabled && !n.picked).length;
-            const picked = currentData.names.filter(n => n.picked).length;
-            
-            document.getElementById('totalNames').textContent = total;
-            document.getElementById('availableNames').textContent = available;
-            document.getElementById('pickedNames').textContent = picked;
-        }
-
-        function switchClass(className) {
-            currentClass = className;
-            
-            const buttons = document.querySelectorAll('.class-btn');
-            buttons.forEach(btn => btn.classList.remove('active'));
-            event.target.classList.add('active');
-            
-            const titles = {
-                freshman: 'Freshman Name Picker',
-                sophomore: 'Sophomore Name Picker',
-                junior: 'Junior Name Picker',
-                senior: 'Senior Name Picker'
-            };
-            
-            document.getElementById('classTitle').textContent = titles[className];
-            const pickedNameEl = document.getElementById('pickedName');
-            pickedNameEl.textContent = 'Click "Pick Random Name" to start';
-            pickedNameEl.classList.add('empty');
-            
-            renderNames();
-            
-            if (window.innerWidth <= 768) {
-                document.getElementById('sidebar').classList.remove('open');
+        function addName() {
+            if (!isAuthenticated) {
+                showAuthModal();
+                return;
+            }
+            var input = document.getElementById('new-name-input');
+            var name = input.value.trim();
+            if (name) {
+                if (!names[currentGrade]) {
+                    names[currentGrade] = [];
+                }
+                names[currentGrade].push({ name: name, available: true, picked: false });
+                input.value = '';
+                saveData();
             }
         }
 
-        function toggleMenu() {
-            document.getElementById('sidebar').classList.toggle('open');
+        function addBulkNames() {
+            if (!isAuthenticated) {
+                showAuthModal();
+                return;
+            }
+            var input = document.getElementById('bulk-names-input');
+            var lines = input.value.split('\n');
+            var nameList = [];
+            for (var i = 0; i < lines.length; i++) {
+                var trimmed = lines[i].trim();
+                if (trimmed) {
+                    nameList.push(trimmed);
+                }
+            }
+            if (nameList.length > 0) {
+                if (!names[currentGrade]) {
+                    names[currentGrade] = [];
+                }
+                for (var j = 0; j < nameList.length; j++) {
+                    names[currentGrade].push({ name: nameList[j], available: true, picked: false });
+                }
+                input.value = '';
+                document.getElementById('bulk-add-section').classList.add('hidden');
+                saveData();
+            }
         }
 
-        document.getElementById('adminModal').addEventListener('click', function(e) {
-            if (e.target === this) {
-                closeAdminModal();
+        function toggleBulkAdd() {
+            var section = document.getElementById('bulk-add-section');
+            section.classList.toggle('hidden');
+        }
+
+        function deleteName(index) {
+            if (!isAuthenticated) {
+                showAuthModal();
+                return;
+            }
+            names[currentGrade].splice(index, 1);
+            saveData();
+        }
+
+        function toggleAvailability(index) {
+            names[currentGrade][index].available = !names[currentGrade][index].available;
+            saveData();
+        }
+
+        function pickRandom() {
+            var currentNames = names[currentGrade] || [];
+            var available = [];
+            for (var i = 0; i < currentNames.length; i++) {
+                if (currentNames[i].available && !currentNames[i].picked) {
+                    available.push(currentNames[i]);
+                }
+            }
+            if (available.length === 0) {
+                alert('No names available to pick!');
+                return;
+            }
+            var randomIndex = Math.floor(Math.random() * available.length);
+            var picked = available[randomIndex];
+            
+            document.getElementById('picked-name').textContent = picked.name;
+            document.getElementById('last-picked').classList.remove('hidden');
+            
+            for (var j = 0; j < names[currentGrade].length; j++) {
+                if (names[currentGrade][j].name === picked.name && names[currentGrade][j].available && !names[currentGrade][j].picked) {
+                    names[currentGrade][j].picked = true;
+                    break;
+                }
+            }
+            saveData();
+        }
+
+        function resetPicked() {
+            if (!isAuthenticated) {
+                showAuthModal();
+                return;
+            }
+            for (var i = 0; i < names[currentGrade].length; i++) {
+                names[currentGrade][i].picked = false;
+            }
+            document.getElementById('last-picked').classList.add('hidden');
+            saveData();
+        }
+
+        function showAuthModal() {
+            document.getElementById('auth-modal').classList.remove('hidden');
+        }
+
+        function hideAuthModal() {
+            document.getElementById('auth-modal').classList.add('hidden');
+            document.getElementById('password-input').value = '';
+        }
+
+        function authenticate() {
+            var password = document.getElementById('password-input').value;
+            if (password === ADMIN_PASSWORD) {
+                isAuthenticated = true;
+                document.getElementById('auth-status').textContent = 'Authenticated';
+                document.getElementById('add-names-section').classList.remove('hidden');
+                hideAuthModal();
+                renderNames();
+            } else {
+                alert('Incorrect password');
+                document.getElementById('password-input').value = '';
+            }
+        }
+
+        document.getElementById('new-name-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                addName();
             }
         });
 
-        loadAllData();
-        setInterval(loadAllData, 3000);
+        document.getElementById('password-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                authenticate();
+            }
+        });
     </script>
 </body>
 </html>
