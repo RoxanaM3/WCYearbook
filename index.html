@@ -339,7 +339,7 @@
             font-size: 0.95rem;
         }
 
-        input[type="text"], input[type="password"], textarea {
+        input[type="text"], input[type="password"], textarea, select {
             width: 100%;
             padding: 12px 15px;
             border: 2px solid #e9ecef;
@@ -348,7 +348,7 @@
             transition: border-color 0.2s ease;
         }
 
-        input[type="text"]:focus, input[type="password"]:focus, textarea:focus {
+        input[type="text"]:focus, input[type="password"]:focus, textarea:focus, select:focus {
             outline: none;
             border-color: #2c3e50;
         }
@@ -392,6 +392,19 @@
             display: flex;
             gap: 10px;
             margin-top: 25px;
+        }
+
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            display: none;
+        }
+
+        .success-message.show {
+            display: block;
         }
 
         @media (max-width: 768px) {
@@ -498,9 +511,21 @@
         <div class="modal-content">
             <div class="modal-header">Admin Panel</div>
             
+            <div class="success-message" id="successMessage"></div>
+            
             <div class="input-group">
                 <label class="input-label">Password</label>
                 <input type="password" id="adminPassword" placeholder="Enter admin password">
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">Select Class</label>
+                <select id="adminClassSelect">
+                    <option value="freshman">Freshman</option>
+                    <option value="sophomore">Sophomore</option>
+                    <option value="junior">Junior</option>
+                    <option value="senior">Senior</option>
+                </select>
             </div>
 
             <div class="input-group">
@@ -524,30 +549,52 @@
     <script>
         const ADMIN_PASSWORD = 'Purple60pear';
         let currentClass = 'freshman';
-        let storageData = {};
+        let allClassData = {
+            freshman: { names: [] },
+            sophomore: { names: [] },
+            junior: { names: [] },
+            senior: { names: [] }
+        };
 
-        async function loadData() {
-            try {
-                const result = await window.storage.get(`names-${currentClass}`, true);
-                if (result && result.value) {
-                    storageData = JSON.parse(result.value);
-                } else {
-                    storageData = { names: [] };
+        async function loadAllData() {
+            const classes = ['freshman', 'sophomore', 'junior', 'senior'];
+            
+            for (const cls of classes) {
+                try {
+                    const result = await window.storage.get(`names-${cls}`, true);
+                    if (result && result.value) {
+                        allClassData[cls] = JSON.parse(result.value);
+                    } else {
+                        allClassData[cls] = { names: [] };
+                    }
+                } catch (error) {
+                    console.log(`No data for ${cls}, starting fresh`);
+                    allClassData[cls] = { names: [] };
                 }
-            } catch (error) {
-                console.log('No data found, starting fresh');
-                storageData = { names: [] };
             }
+            
             renderNames();
         }
 
-        async function saveData() {
+        async function saveDataForClass(className) {
             try {
-                await window.storage.set(`names-${currentClass}`, JSON.stringify(storageData), true);
+                const dataToSave = JSON.stringify(allClassData[className]);
+                await window.storage.set(`names-${className}`, dataToSave, true);
+                return true;
             } catch (error) {
                 console.error('Save error:', error);
                 alert('Failed to save data. Please try again.');
+                return false;
             }
+        }
+
+        function showSuccessMessage(message) {
+            const successMsg = document.getElementById('successMessage');
+            successMsg.textContent = message;
+            successMsg.classList.add('show');
+            setTimeout(() => {
+                successMsg.classList.remove('show');
+            }, 3000);
         }
 
         function checkPassword() {
@@ -561,6 +608,7 @@
 
         function openAdminModal() {
             document.getElementById('adminModal').classList.add('active');
+            document.getElementById('adminClassSelect').value = currentClass;
         }
 
         function closeAdminModal() {
@@ -570,9 +618,10 @@
             document.getElementById('multipleNames').value = '';
         }
 
-        function addSingleName() {
+        async function addSingleName() {
             if (!checkPassword()) return;
             
+            const targetClass = document.getElementById('adminClassSelect').value;
             const nameInput = document.getElementById('singleName');
             const name = nameInput.value.trim();
             
@@ -581,26 +630,32 @@
                 return;
             }
             
-            if (storageData.names.some(n => n.name.toLowerCase() === name.toLowerCase())) {
-                alert('This name already exists!');
+            if (allClassData[targetClass].names.some(n => n.name.toLowerCase() === name.toLowerCase())) {
+                alert('This name already exists in this class!');
                 return;
             }
             
-            storageData.names.push({
+            allClassData[targetClass].names.push({
                 name: name,
                 enabled: true,
                 picked: false,
                 id: Date.now() + Math.random()
             });
             
-            nameInput.value = '';
-            saveData();
-            renderNames();
+            const saved = await saveDataForClass(targetClass);
+            if (saved) {
+                nameInput.value = '';
+                showSuccessMessage(`Added "${name}" to ${targetClass}`);
+                if (targetClass === currentClass) {
+                    renderNames();
+                }
+            }
         }
 
-        function addMultipleNames() {
+        async function addMultipleNames() {
             if (!checkPassword()) return;
             
+            const targetClass = document.getElementById('adminClassSelect').value;
             const textarea = document.getElementById('multipleNames');
             const names = textarea.value.split('\n').map(n => n.trim()).filter(n => n);
             
@@ -611,8 +666,8 @@
             
             let added = 0;
             names.forEach(name => {
-                if (!storageData.names.some(n => n.name.toLowerCase() === name.toLowerCase())) {
-                    storageData.names.push({
+                if (!allClassData[targetClass].names.some(n => n.name.toLowerCase() === name.toLowerCase())) {
+                    allClassData[targetClass].names.push({
                         name: name,
                         enabled: true,
                         picked: false,
@@ -622,37 +677,44 @@
                 }
             });
             
-            textarea.value = '';
-            alert(`Added ${added} new name(s)`);
-            saveData();
-            renderNames();
-        }
-
-        function deleteName(id) {
-            const password = prompt('Enter admin password to delete:');
-            if (password !== ADMIN_PASSWORD) {
-                alert('Incorrect password!');
-                return;
-            }
-            
-            if (confirm('Are you sure you want to delete this name?')) {
-                storageData.names = storageData.names.filter(n => n.id !== id);
-                saveData();
-                renderNames();
+            const saved = await saveDataForClass(targetClass);
+            if (saved) {
+                textarea.value = '';
+                showSuccessMessage(`Added ${added} name(s) to ${targetClass}`);
+                if (targetClass === currentClass) {
+                    renderNames();
+                }
             }
         }
 
-        function toggleName(id) {
-            const name = storageData.names.find(n => n.id === id);
+        async function deleteName(id) {
+            if (confirm('Are you sure you want to delete this name? You will need to enter the admin password.')) {
+                const password = prompt('Enter admin password to delete:');
+                if (password !== ADMIN_PASSWORD) {
+                    alert('Incorrect password! Name was not deleted.');
+                    return;
+                }
+                
+                allClassData[currentClass].names = allClassData[currentClass].names.filter(n => n.id !== id);
+                const saved = await saveDataForClass(currentClass);
+                if (saved) {
+                    renderNames();
+                    alert('Name deleted successfully!');
+                }
+            }
+        }
+
+        async function toggleName(id) {
+            const name = allClassData[currentClass].names.find(n => n.id === id);
             if (name) {
                 name.enabled = !name.enabled;
-                saveData();
+                await saveDataForClass(currentClass);
                 renderNames();
             }
         }
 
-        function pickRandomName() {
-            const availableNames = storageData.names.filter(n => n.enabled && !n.picked);
+        async function pickRandomName() {
+            const availableNames = allClassData[currentClass].names.filter(n => n.enabled && !n.picked);
             
             if (availableNames.length === 0) {
                 const pickedNameEl = document.getElementById('pickedName');
@@ -670,7 +732,7 @@
             pickedNameEl.textContent = picked.name;
             pickedNameEl.classList.remove('empty');
             
-            saveData();
+            await saveDataForClass(currentClass);
             renderNames();
         }
 
@@ -678,7 +740,8 @@
             const list = document.getElementById('namesList');
             list.innerHTML = '';
             
-            const sortedNames = [...storageData.names].sort((a, b) => 
+            const currentData = allClassData[currentClass];
+            const sortedNames = [...currentData.names].sort((a, b) => 
                 a.name.localeCompare(b.name)
             );
             
@@ -724,9 +787,10 @@
         }
 
         function updateStats() {
-            const total = storageData.names.length;
-            const available = storageData.names.filter(n => n.enabled && !n.picked).length;
-            const picked = storageData.names.filter(n => n.picked).length;
+            const currentData = allClassData[currentClass];
+            const total = currentData.names.length;
+            const available = currentData.names.filter(n => n.enabled && !n.picked).length;
+            const picked = currentData.names.filter(n => n.picked).length;
             
             document.getElementById('totalNames').textContent = total;
             document.getElementById('availableNames').textContent = available;
@@ -752,7 +816,7 @@
             pickedNameEl.textContent = 'Click "Pick Random Name" to start';
             pickedNameEl.classList.add('empty');
             
-            loadData();
+            renderNames();
             
             if (window.innerWidth <= 768) {
                 document.getElementById('sidebar').classList.remove('open');
@@ -763,15 +827,14 @@
             document.getElementById('sidebar').classList.toggle('open');
         }
 
-        // Close modal when clicking outside
         document.getElementById('adminModal').addEventListener('click', function(e) {
             if (e.target === this) {
                 closeAdminModal();
             }
         });
 
-        loadData();
-        setInterval(loadData, 3000);
+        loadAllData();
+        setInterval(loadAllData, 3000);
     </script>
 </body>
 </html>
