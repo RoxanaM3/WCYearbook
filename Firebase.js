@@ -1,9 +1,11 @@
-// Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+// firebase.js
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {
+  getFirestore, doc, getDoc, setDoc, onSnapshot
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-// Your web app's Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyAouO2XczT3EKqebZyTwqj7yFfPeS46csg",
   authDomain: "yearbook-randomizer.firebaseapp.com",
@@ -13,5 +15,7 @@ const firebaseConfig = {
   appId: "1:127922673093:web:67c4286b84a062f35827ac"
 };
 
-// Initialize Firebase
 const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+export { db, doc, getDoc, setDoc, onSnapshot };
