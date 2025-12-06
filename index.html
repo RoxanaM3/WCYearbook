@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Multi-User Random Name Picker</title>
+    <title>Random Name Picker</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
@@ -41,6 +41,7 @@
                     </svg>
                     <span id="auth-status">Admin Login</span>
                 </button>
+                <div id="sync-status" class="mt-2 text-xs text-gray-500">Connecting...</div>
             </div>
         </div>
 
@@ -82,7 +83,7 @@
                         </div>
                         <button onclick="toggleBulkAdd()" class="text-sm text-indigo-600 hover:text-indigo-700">
                             Add multiple names
-                        </button>
+                        button>
                         <div id="bulk-add-section" class="hidden mt-3">
                             <textarea id="bulk-names-input" placeholder="Enter names (one per line)" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 mb-2" rows="4"></textarea>
                             <button onclick="addBulkNames()" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all">
@@ -95,7 +96,7 @@
                 <div class="bg-white rounded-xl shadow-lg p-6">
                     <h3 class="text-xl font-semibold mb-4">Names</h3>
                     <div id="names-list" class="space-y-2">
-                        <p class="text-gray-500 text-center py-8">No names added yet</p>
+                        <p class="text-gray-500 text-center py-8">Loading...</p>
                     </div>
                 </div>
             </div>
@@ -117,36 +118,75 @@
         </div>
     </div>
 
-    <script>
-        var ADMIN_PASSWORD = 'Purple60pear';
-        var GRADES = ['freshman', 'sophomore', 'junior', 'senior'];
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getDatabase, ref, set, onValue, get } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
+
+import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBVmgc8wxn1MkpI10rkKlAThcaMYnhIAX8",
+  authDomain: "wcyearbook-a2b42.firebaseapp.com",
+  projectId: "wcyearbook-a2b42",
+  storageBucket: "wcyearbook-a2b42.firebasestorage.app",
+  messagingSenderId: "1085743596160",
+  appId: "1:1085743596160:web:a6a52e9d102e4e40869c65",
+  measurementId: "G-ZGYDPH0QK7"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+
+        window.ADMIN_PASSWORD = 'Purple60pear';
+        window.GRADES = ['freshman', 'sophomore', 'junior', 'senior'];
         
-        var currentGrade = 'freshman';
-        var names = {};
-        var isAuthenticated = false;
+        window.currentGrade = 'freshman';
+        window.names = {};
+        window.isAuthenticated = false;
 
-        loadData();
-
-        function loadData() {
-            for (var i = 0; i < GRADES.length; i++) {
-                var grade = GRADES[i];
-                var stored = localStorage.getItem('names-' + grade);
-                names[grade] = stored ? JSON.parse(stored) : [];
+        // Load data from Firebase
+        window.loadData = function() {
+            document.getElementById('sync-status').textContent = 'Syncing...';
+            
+            for (var i = 0; i < window.GRADES.length; i++) {
+                var grade = window.GRADES[i];
+                (function(currentGradeInLoop) {
+                    var gradeRef = ref(database, 'names/' + currentGradeInLoop);
+                    onValue(gradeRef, function(snapshot) {
+                        var data = snapshot.val();
+                        window.names[currentGradeInLoop] = data || [];
+                        if (currentGradeInLoop === window.currentGrade) {
+                            window.renderNames();
+                            window.updateCounts();
+                        }
+                        document.getElementById('sync-status').textContent = 'Synced ✓';
+                    });
+                })(grade);
             }
-            renderNames();
-            updateCounts();
-        }
+        };
 
-        function saveData() {
-            localStorage.setItem('names-' + currentGrade, JSON.stringify(names[currentGrade]));
-            renderNames();
-            updateCounts();
-        }
+        window.saveData = function() {
+            var gradeRef = ref(database, 'names/' + window.currentGrade);
+            set(gradeRef, window.names[window.currentGrade])
+                .then(function() {
+                    document.getElementById('sync-status').textContent = 'Synced ✓';
+                })
+                .catch(function(error) {
+                    document.getElementById('sync-status').textContent = 'Sync failed';
+                    console.error('Error saving data:', error);
+                });
+        };
 
-        function switchGrade(grade) {
-            currentGrade = grade;
-            for (var i = 0; i < GRADES.length; i++) {
-                var g = GRADES[i];
+        window.switchGrade = function(grade) {
+            window.currentGrade = grade;
+            for (var i = 0; i < window.GRADES.length; i++) {
+                var g = window.GRADES[i];
                 var btn = document.getElementById('btn-' + g);
                 if (g === grade) {
                     btn.className = 'w-full text-left px-4 py-3 mb-2 rounded-lg font-medium transition-all bg-indigo-100 text-indigo-700 shadow-sm';
@@ -155,12 +195,12 @@
                 }
             }
             document.getElementById('grade-title').textContent = grade.charAt(0).toUpperCase() + grade.slice(1) + ' Class';
-            renderNames();
-            updateCounts();
-        }
+            window.renderNames();
+            window.updateCounts();
+        };
 
-        function updateCounts() {
-            var currentNames = names[currentGrade] || [];
+        window.updateCounts = function() {
+            var currentNames = window.names[window.currentGrade] || [];
             var available = 0;
             var picked = 0;
             for (var i = 0; i < currentNames.length; i++) {
@@ -174,10 +214,10 @@
             document.getElementById('available-count').textContent = 'Available: ' + available;
             document.getElementById('picked-count').textContent = 'Picked: ' + picked;
             document.getElementById('total-count').textContent = 'Total: ' + currentNames.length;
-        }
+        };
 
-        function renderNames() {
-            var currentNames = names[currentGrade] || [];
+        window.renderNames = function() {
+            var currentNames = window.names[window.currentGrade] || [];
             var container = document.getElementById('names-list');
             
             if (currentNames.length === 0) {
@@ -193,7 +233,7 @@
                 var pickedBadge = item.picked ? '<span class="text-xs bg-red-200 text-red-800 px-2 py-1 rounded">Picked</span>' : '';
                 var checkboxChecked = item.available ? 'checked' : '';
                 var deleteBtn = '';
-                if (isAuthenticated) {
+                if (window.isAuthenticated) {
                     deleteBtn = '<button onclick="deleteName(' + i + ')" class="p-2 text-red-600 hover:bg-red-50 rounded transition-all"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>';
                 }
                 
@@ -207,28 +247,28 @@
                 html += '</div>';
             }
             container.innerHTML = html;
-        }
+        };
 
-        function addName() {
-            if (!isAuthenticated) {
-                showAuthModal();
+        window.addName = function() {
+            if (!window.isAuthenticated) {
+                window.showAuthModal();
                 return;
             }
             var input = document.getElementById('new-name-input');
             var name = input.value.trim();
             if (name) {
-                if (!names[currentGrade]) {
-                    names[currentGrade] = [];
+                if (!window.names[window.currentGrade]) {
+                    window.names[window.currentGrade] = [];
                 }
-                names[currentGrade].push({ name: name, available: true, picked: false });
+                window.names[window.currentGrade].push({ name: name, available: true, picked: false });
                 input.value = '';
-                saveData();
+                window.saveData();
             }
-        }
+        };
 
-        function addBulkNames() {
-            if (!isAuthenticated) {
-                showAuthModal();
+        window.addBulkNames = function() {
+            if (!window.isAuthenticated) {
+                window.showAuthModal();
                 return;
             }
             var input = document.getElementById('bulk-names-input');
@@ -241,39 +281,39 @@
                 }
             }
             if (nameList.length > 0) {
-                if (!names[currentGrade]) {
-                    names[currentGrade] = [];
+                if (!window.names[window.currentGrade]) {
+                    window.names[window.currentGrade] = [];
                 }
                 for (var j = 0; j < nameList.length; j++) {
-                    names[currentGrade].push({ name: nameList[j], available: true, picked: false });
+                    window.names[window.currentGrade].push({ name: nameList[j], available: true, picked: false });
                 }
                 input.value = '';
                 document.getElementById('bulk-add-section').classList.add('hidden');
-                saveData();
+                window.saveData();
             }
-        }
+        };
 
-        function toggleBulkAdd() {
+        window.toggleBulkAdd = function() {
             var section = document.getElementById('bulk-add-section');
             section.classList.toggle('hidden');
-        }
+        };
 
-        function deleteName(index) {
-            if (!isAuthenticated) {
-                showAuthModal();
+        window.deleteName = function(index) {
+            if (!window.isAuthenticated) {
+                window.showAuthModal();
                 return;
             }
-            names[currentGrade].splice(index, 1);
-            saveData();
-        }
+            window.names[window.currentGrade].splice(index, 1);
+            window.saveData();
+        };
 
-        function toggleAvailability(index) {
-            names[currentGrade][index].available = !names[currentGrade][index].available;
-            saveData();
-        }
+        window.toggleAvailability = function(index) {
+            window.names[window.currentGrade][index].available = !window.names[window.currentGrade][index].available;
+            window.saveData();
+        };
 
-        function pickRandom() {
-            var currentNames = names[currentGrade] || [];
+        window.pickRandom = function() {
+            var currentNames = window.names[window.currentGrade] || [];
             var available = [];
             for (var i = 0; i < currentNames.length; i++) {
                 if (currentNames[i].available && !currentNames[i].picked) {
@@ -290,61 +330,66 @@
             document.getElementById('picked-name').textContent = picked.name;
             document.getElementById('last-picked').classList.remove('hidden');
             
-            for (var j = 0; j < names[currentGrade].length; j++) {
-                if (names[currentGrade][j].name === picked.name && names[currentGrade][j].available && !names[currentGrade][j].picked) {
-                    names[currentGrade][j].picked = true;
+            for (var j = 0; j < window.names[window.currentGrade].length; j++) {
+                if (window.names[window.currentGrade][j].name === picked.name && 
+                    window.names[window.currentGrade][j].available && 
+                    !window.names[window.currentGrade][j].picked) {
+                    window.names[window.currentGrade][j].picked = true;
                     break;
                 }
             }
-            saveData();
-        }
+            window.saveData();
+        };
 
-        function resetPicked() {
-            if (!isAuthenticated) {
-                showAuthModal();
+        window.resetPicked = function() {
+            if (!window.isAuthenticated) {
+                window.showAuthModal();
                 return;
             }
-            for (var i = 0; i < names[currentGrade].length; i++) {
-                names[currentGrade][i].picked = false;
+            for (var i = 0; i < window.names[window.currentGrade].length; i++) {
+                window.names[window.currentGrade][i].picked = false;
             }
             document.getElementById('last-picked').classList.add('hidden');
-            saveData();
-        }
+            window.saveData();
+        };
 
-        function showAuthModal() {
+        window.showAuthModal = function() {
             document.getElementById('auth-modal').classList.remove('hidden');
-        }
+        };
 
-        function hideAuthModal() {
+        window.hideAuthModal = function() {
             document.getElementById('auth-modal').classList.add('hidden');
             document.getElementById('password-input').value = '';
-        }
+        };
 
-        function authenticate() {
+        window.authenticate = function() {
             var password = document.getElementById('password-input').value;
-            if (password === ADMIN_PASSWORD) {
-                isAuthenticated = true;
+            if (password === window.ADMIN_PASSWORD) {
+                window.isAuthenticated = true;
                 document.getElementById('auth-status').textContent = 'Authenticated';
                 document.getElementById('add-names-section').classList.remove('hidden');
-                hideAuthModal();
-                renderNames();
+                window.hideAuthModal();
+                window.renderNames();
             } else {
                 alert('Incorrect password');
                 document.getElementById('password-input').value = '';
             }
-        }
+        };
 
         document.getElementById('new-name-input').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
-                addName();
+                window.addName();
             }
         });
 
         document.getElementById('password-input').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
-                authenticate();
+                window.authenticate();
             }
         });
+
+        // Initialize
+        window.loadData();
     </script>
 </body>
 </html>
